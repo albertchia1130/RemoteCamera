@@ -6,6 +6,7 @@
 #include <sys/socket.h> //for socket APIs 
 #include <sys/types.h> 
 #include <string.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <syslog.h>
@@ -15,13 +16,17 @@
 #define DEFAULT_PORT 8080
 #define IP_ADDR "192.168.10.106"
 
+static void*  ReadingThread();
+
 int ConnectSocket;
 
 int main() 
 {
     
-    pthread_t writing_thread_id,reading_thread_id;
+    pthread_t video_thread_id;
     int iResult;
+    char userMSG[DEFAULT_BUFLEN];
+    char serMsg[DEFAULT_BUFLEN];
     struct sockaddr_in servAddr;
     char ipaddress[DEFAULT_BUFLEN];
 
@@ -46,9 +51,36 @@ int main()
     
 
     printf("Connection Succeded\n");
+    iResult = recv(ConnectSocket, serMsg, sizeof(serMsg), 0);
 
-    system("SimpleChatServer/client/Makefile");
+    if(iResult != -1)
+    {
+        if(strcmp(serMsg,"VideoOK")== 0)
+        {
+            printf("prepare To receive \n");
+            sleep(1);
+            pthread_create(&video_thread_id, NULL, &ReadingThread,NULL);
+            while(1)
+            {
+                fgets(userMSG, DEFAULT_BUFLEN, stdin);
+                if(strcmp(userMSG,"exit")==0)
+                {
+                    send( ConnectSocket, "EXIT", DEFAULT_BUFLEN, 0 );
+                    break;
+                }
+            }
+        }
+    }
+    else{
+        printf("Video not available/n");
+    }
 
+    return 0;
+}
 
+static void*  ReadingThread() 
+{ 
+    printf("video stream running");
+    system("ffplay -i rtsp://192.168.10.106:8554/my");
     return 0;
 }

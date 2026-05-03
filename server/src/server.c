@@ -53,6 +53,13 @@ int main(int argc, char const* argv[])
     syslog(LOG_INFO, "New User");
     printf("A new connection\n");
     system("ffmpeg -f v4l2 -i /dev/video0   -vcodec libx264 -preset veryfast -tune zerolatency   -f rtsp rtsp://localhost:8554/my "); //Attach client Socket to the list
+    send( clientSocket, "VideoOK", messageSize, 0 );
+    while(1)
+    {
+
+        
+    }
+
 
     return 0; 
 }
