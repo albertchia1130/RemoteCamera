@@ -12,29 +12,22 @@
 
 #define messageSize 255
 
-int ClientIndex = 0;
-int clientSocket =0;
-int servSockD;
 
-typedef struct ClientAttr{
-    struct ClientAttr* nextClient;
-    int ClientID;
+static void* ffmpeg_stream()
+{
+    system("ffmpeg -f v4l2 -i /dev/video0   -vcodec libx264 -preset veryfast -tune zerolatency   -f rtsp rtsp://localhost:8554/my "); //Attach client Socket to the list
+}
 
-}Client_number;
 
-int CreateNAttachClient(int clientSocket); //Create a thread for each client attached
-int FreeNDetachClient(Client_number* Client); //Exit thread and free up resource when client exit
-void BroadcastMessage(int user, char* Message); //broadcast message received from a client to all subscriber
-static void* ClientMessageFunc(void *arg);
-
-Client_number* HeadListofClient; //Starting point of client list;
   
 int main(int argc, char const* argv[]) 
 { 
-  
+    pthread_t thread_id;  
+    int iResult;
+    char serMsg[messageSize];
     // create server socket similar to what was done in 
     // client program 
-    servSockD = socket(AF_INET, SOCK_STREAM, 0); 
+    int servSockD = socket(AF_INET, SOCK_STREAM, 0); 
     // define server address 
     struct sockaddr_in servAddr; 
   
@@ -49,17 +42,25 @@ int main(int argc, char const* argv[])
     listen(servSockD, SOMAXCONN); 
     printf("Entering Listen\n");
     
-    clientSocket = accept(servSockD, NULL, NULL);
+    int clientSocket = accept(servSockD, NULL, NULL);
     syslog(LOG_INFO, "New User");
     printf("A new connection\n");
     system("ffmpeg -f v4l2 -i /dev/video0   -vcodec libx264 -preset veryfast -tune zerolatency   -f rtsp rtsp://localhost:8554/my "); //Attach client Socket to the list
+    pthread_create(&thread_id, NULL, ffmpeg_stream, NULL);
     send( clientSocket, "VideoOK", messageSize, 0 );
     while(1)
     {
+         iResult = recv(servSockD, serMsg, sizeof(serMsg), 0);
 
+        if(iResult != -1 && strcmp(serMsg,"Video_stop")== 0)
+        {
+            system("killall -INT ffmpeg");
+            pthread_join(thread_id, NULL); // Wait for thread to finish
+            printf("line finished\n");
+            break;
+        }
         
     }
-
 
     return 0; 
 }

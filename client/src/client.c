@@ -53,23 +53,22 @@ int main()
     printf("Connection Succeded\n");
     iResult = recv(ConnectSocket, serMsg, sizeof(serMsg), 0);
 
-    if(iResult != -1)
+    if(iResult != -1 && strcmp(serMsg,"VideoOK")== 0)
     {
-        if(strcmp(serMsg,"VideoOK")== 0)
+
+        printf("prepare To receive \n");
+        sleep(1);
+        pthread_create(&video_thread_id, NULL, &ReadingThread,NULL);
+        while(1)
         {
-            printf("prepare To receive \n");
-            sleep(1);
-            pthread_create(&video_thread_id, NULL, &ReadingThread,NULL);
-            while(1)
+            fgets(userMSG, DEFAULT_BUFLEN, stdin);
+            if(strcmp(userMSG,"exit")==0)
             {
-                fgets(userMSG, DEFAULT_BUFLEN, stdin);
-                if(strcmp(userMSG,"exit")==0)
-                {
-                    send( ConnectSocket, "EXIT", DEFAULT_BUFLEN, 0 );
-                    break;
-                }
+                send( ConnectSocket, "EXIT", DEFAULT_BUFLEN, 0 );
+                break;
             }
         }
+    
     }
     else{
         printf("Video not available/n");
