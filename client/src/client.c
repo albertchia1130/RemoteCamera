@@ -16,14 +16,11 @@
 #define DEFAULT_PORT 8080
 #define IP_ADDR "192.168.10.106"
 
-static void*  ReadingThread();
-
 int ConnectSocket;
 
 int main() 
 {
     
-    pthread_t video_thread_id;
     int iResult;
     char userMSG[DEFAULT_BUFLEN];
     char serMsg[DEFAULT_BUFLEN];
@@ -58,28 +55,13 @@ int main()
 
         printf("prepare To receive \n");
         sleep(1);
-        pthread_create(&video_thread_id, NULL, &ReadingThread,NULL);
-        while(1)
-        {
-            fgets(userMSG, DEFAULT_BUFLEN, stdin);
-            if(strcmp(userMSG,"exit")==0)
-            {
-                send( ConnectSocket, "EXIT", DEFAULT_BUFLEN, 0 );
-                break;
-            }
-        }
-    
+        printf("video stream running");
+        system("ffplay -i rtsp://192.168.10.106:8554/my");
+        send( ConnectSocket, "EXIT", DEFAULT_BUFLEN, 0 );
     }
     else{
         printf("Video not available/n");
     }
 
-    return 0;
-}
-
-static void*  ReadingThread() 
-{ 
-    printf("video stream running");
-    system("ffplay -i rtsp://192.168.10.106:8554/my");
     return 0;
 }
